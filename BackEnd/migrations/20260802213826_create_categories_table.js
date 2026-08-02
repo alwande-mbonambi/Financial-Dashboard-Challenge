@@ -11,6 +11,7 @@ exports.up = function (knex) {
       .notNullable()
       .references("id")
       .inTable("users")
+      .onDelete("CASCADE"); // Deletes categories if user is deleted
     table.string("name", 50).notNullable();
     table.enum("type", ["income", "expense"]).notNullable();
     table.string("color", 20).defaultTo("#4A90E2");
