@@ -1,0 +1,14 @@
+node_modules/  #npm packages
+
+.env                #env file for secret variables
+
+*.log               #log files
+logs/
+
+coverage/                   #coverage reports
+
+*.sqlite                   #database files
+*.db
+   
+.DS_Store                     #macOS system files
+Thumbs.db                     #Windows system files

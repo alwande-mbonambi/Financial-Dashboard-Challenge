@@ -1,0 +1,20 @@
+
+node_modules/         #npm packages
+
+
+dist/                   #vite build outputs
+dist-ssr/
+
+.env                            #.env for secret variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+
+.vite/                      #vite cache folder
+.eslintcache
+
+
+.DS_Store               #macOS system files
+Thumbs.db              #Windows system files
