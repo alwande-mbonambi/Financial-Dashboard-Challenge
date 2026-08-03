@@ -3,26 +3,21 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable("categories", (table) => {
-    table.increments("id").primary();
-    table
-      .integer("user_id")
-      .unsigned()
-      .notNullable()
-      .references("id")
-      .inTable("users")
-      .onDelete("CASCADE"); // Deletes categories if user is deleted
-    table.string("name", 50).notNullable();
-    table.enum("type", ["income", "expense"]).notNullable();
-    table.string("color", 20).defaultTo("#4A90E2");
-    table.timestamps(true, true);
+  return knex.schema.createTable('categories', (table) => {
+    table.increments('id').primary();
+    table.string('name', 100).notNullable();
+    table.enum('type', ['income', 'expense']).notNullable();
+    table.timestamp('created_at').defaultTo(knex.fn.now());
+ 
+    table.unique(['name', 'type'], 'uniq_category');
   });
 };
-
+ 
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTableIfExists("categories");
+  return knex.schema.dropTableIfExists('categories');
 };
+ 
