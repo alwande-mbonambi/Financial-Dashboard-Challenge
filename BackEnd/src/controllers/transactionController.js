@@ -49,13 +49,13 @@ const transactionController = {
 
   async create(req, res) {                                                         // POST /api/transactions
     try {
-      const { amount, type, description, date, category_id } = req.body;
+      const { amount, type, reference, notes, payment_method, date, category_id } = req.body;
 
       // Validate required fields
-      if (!amount || !type || !date || !category_id) {
+      if (!amount || !type || !date || !category_id || !payment_method) {
         return res.status(400).json({
           success: false,
-          message: 'amount, type, date, and category_id are required fields.',
+          message: 'amount, type, date, category_id, and payment_method are required fields.',
         });
       }
 
@@ -64,7 +64,16 @@ const transactionController = {
           success: false,
           message: 'Type must be either "income" or "expense".',
         });
+
       }
+
+      if (!['Cash', 'Card', 'EFT'].includes(payment_method)) {
+        return res.status(400).json({
+          success: false,
+          message: 'payment_method must be either "Cash", "Card", or "EFT".',
+        });
+      }
+
 
       // Verify foreign key category exists
       const existingCategory = await categoryService.getCategoryById(category_id);
@@ -78,7 +87,9 @@ const transactionController = {
       const newTransaction = await transactionService.createTransaction({
         amount,
         type,
-        description: description || '',
+        reference: reference || null,
+        notes: notes || null,
+        payment_method,
         date,
         category_id,
       });
@@ -100,7 +111,7 @@ const transactionController = {
   async update(req, res) {                                                            // PUT /api/transactions/:id
     try {  
       const { id } = req.params;
-      const { amount, type, description, date, category_id } = req.body;
+      const { amount, type, reference, notes, payment_method, date, category_id } = req.body;
 
       const existingTransaction = await transactionService.getTransactionById(id);
       if (!existingTransaction) {
@@ -127,10 +138,19 @@ const transactionController = {
         }
       }
 
+      if (payment_method && !['Cash', 'Card', 'EFT'].includes(payment_method)) {
+        return res.status(400).json({
+          success: false,
+          message: 'payment_method must be either "Cash", "Card", or "EFT".',
+        });
+      }
+
       const updatedTransaction = await transactionService.updateTransaction(id, {
         amount,
         type,
-        description,
+        reference: reference || null,
+        notes: notes || null,
+        payment_method,
         date,
         category_id,
       });
