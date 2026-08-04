@@ -14,6 +14,8 @@ exports.seed = async function (knex) {            //this function
   const [freelanceId] = await knex('categories').insert({ name: 'Freelance', type: 'income' });
   const [investmentsId] = await knex('categories').insert({ name: 'Investments', type: 'income' });
 
+  const [Test] = await knex('categories').insert({ name: 'Test', type: 'income' });  //i want to test the  deletion of  a category with a transaction with it
+
   //Expense Categories 
   const [rentId] = await knex('categories').insert({ name: 'Rent & Housing', type: 'expense' });
   const [groceriesId] = await knex('categories').insert({ name: 'Groceries', type: 'expense' });
@@ -208,6 +210,16 @@ exports.seed = async function (knex) {            //this function
       reference: 'Fuel Top-up',
       notes: 'Full tank at Shell',
       payment_method: 'Cash'
+    },
+
+    {                      //testing transaction for category deletion
+     category_id: Test,
+      type: 'income',
+      date: '2026-08-02',
+      amount: 380.00,
+      reference: 'Dinner with Team',
+      notes: 'Burger & drinks',
+      payment_method: 'Card' 
     }
   ]);
 };
