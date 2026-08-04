@@ -4,7 +4,7 @@ const budgetController = {
   
   async getByYear(req, res) {
     try {
-      const year = req.query.year || new Date().getFullYear();              // this is to GET /api/budgets?year=2026
+      const year = Number(req.query.year) || new Date().getFullYear();          //GET     // this is to get the budget for a specific year, defaulting to the current year if not provided
       const budgets = await budgetService.getBudgetsByYear(year);
 
       return res.status(200).json({
@@ -50,6 +50,36 @@ const budgetController = {
       });
     }
   },
+
+  
+async deleteBudget(req, res) {                                                                    // DELETE /api/budgets?year=2026&categoryId=3
+  try {
+    const { year, categoryId } = req.query;
+
+    if (!year) {
+      return res.status(400).json({
+        success: false,
+        message: 'Year query parameter is required.',
+      });
+    }
+
+    const updatedBudgets = await budgetService.deleteBudget(
+      Number(year),
+      categoryId ? Number(categoryId) : null
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: updatedBudgets,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete budget',
+      error: error.message,
+    });
+  }
+},
 };
 
 module.exports = budgetController;
