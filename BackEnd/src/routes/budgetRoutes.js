@@ -4,6 +4,7 @@ const budgetController = require('../controllers/budgetController');
 
 router.get('/', budgetController.getByYear);
 router.put('/', budgetController.setBudget);
+router.delete('/', budgetController.deleteBudget);
 
 module.exports = router;
 
