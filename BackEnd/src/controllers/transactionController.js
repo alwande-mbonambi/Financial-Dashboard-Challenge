@@ -94,7 +94,7 @@ const transactionController = {
       }
 
       const newTransaction = await transactionService.createTransaction({
-        amount,
+        amount: numericAmount,
         type,
         reference: reference || null,
         notes: notes || null,
@@ -121,6 +121,17 @@ const transactionController = {
     try {  
       const { id } = req.params;
       const { amount, type, reference, notes, payment_method, date, category_id } = req.body;
+
+      let numericAmount;
+    if (amount !== undefined) {
+      numericAmount = Number(amount);
+      if (isNaN(numericAmount) || numericAmount <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Amount must be a positive number greater than 0.',
+        });
+      }
+    }
 
       const existingTransaction = await transactionService.getTransactionById(id);
       if (!existingTransaction) {
@@ -155,7 +166,7 @@ const transactionController = {
       }
 
       const updatedTransaction = await transactionService.updateTransaction(id, {
-        amount,
+        amount: numericAmount,
         type,
         reference: reference || null,
         notes: notes || null,
