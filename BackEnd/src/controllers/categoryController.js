@@ -118,27 +118,35 @@ const categoryController = {
   },
 
   
-  async delete(req, res) {                                                     //DELETE /api/categories/:id - Delete a category by ID
+  async delete(req, res) {                                                   //DELETE /api/categories/:id - Delete a category by ID
     try {
       const { id } = req.params;
-      const isDeleted = await categoryService.deleteCategory(id);
+      const result = await categoryService.deleteCategory(id);
 
-      if (!isDeleted) {
+      if (!result) {
         return res.status(404).json({
           success: false,
-          message: `Category with ID ${id} not found`
+          message: `Category with ID ${id} not found`,
         });
       }
 
       return res.status(200).json({
         success: true,
-        message: `Category with ID ${id} deleted successfully`
+        message: result.message,
       });
     } catch (error) {
+      
+      if (error.statusCode === 400) {
+        return res.status(400).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
       return res.status(500).json({
         success: false,
         message: 'Failed to delete category',
-        error: error.message
+        error: error.message,
       });
     }
   }
