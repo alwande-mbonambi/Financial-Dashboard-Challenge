@@ -52,12 +52,21 @@ const transactionController = {
       const { amount, type, reference, notes, payment_method, date, category_id } = req.body;
 
       // Validate required fields
-      if (!amount || !type || !date || !category_id || !payment_method) {
-        return res.status(400).json({
-          success: false,
-          message: 'amount, type, date, category_id, and payment_method are required fields.',
-        });
-      }
+      
+    if (amount === undefined || amount === null || !type || !date || !category_id || !payment_method) {
+      return res.status(400).json({
+        success: false,
+        message: 'amount, type, date, category_id, and payment_method are required fields.',
+      });
+    }
+
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Amount must be a positive number greater than 0.',
+      });
+    }
 
       if (!['income', 'expense'].includes(type)) {
         return res.status(400).json({
