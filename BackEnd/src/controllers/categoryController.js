@@ -88,7 +88,7 @@ const categoryController = {
       const { id } = req.params;
       const { name, type } = req.body;
 
-      if (type && !['income', 'expense'].includes(type)) {                  //
+      if (type && !['income', 'expense'].includes(type)) {                  
         return res.status(400).json({
           success: false,
           message: 'Type must be either "income" or "expense"'
