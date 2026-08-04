@@ -40,7 +40,7 @@ const budgetService = {
   async setBudget({ category_id = null, year, amount }) {          // this is to set or update a budget (Upsert: category_id = null for overall)
     const targetCategoryId = category_id || null;
 
-    const existing = await db('budgets')                               //
+    const existing = await db('budgets')
       .where({ year })
       .andWhere((builder) => {
         if (targetCategoryId === null) {
@@ -51,7 +51,11 @@ const budgetService = {
       })
       .first();
 
-    if (existing) {
+    if (amount === 0) {
+      if (existing) {
+        await db('budgets').where({ id: existing.id }).del();
+      }
+    } else if (existing) {
       await db('budgets').where({ id: existing.id }).update({ amount });
     } else {
       await db('budgets').insert({
@@ -61,6 +65,18 @@ const budgetService = {
       });
     }
 
+    return await this.getBudgetsByYear(year);
+  },
+
+  async deleteBudget(year, category_id = null) {
+    const query = db('budgets').where({ year: Number(year) });
+    if (category_id === null || category_id === 'null' || category_id === undefined) {
+      query.whereNull('category_id');
+    } else {
+      query.where('category_id', Number(category_id));
+    }
+
+    await query.del();
     return await this.getBudgetsByYear(year);
   },
 };
