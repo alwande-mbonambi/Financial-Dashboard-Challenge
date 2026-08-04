@@ -60,7 +60,7 @@ const categoryService = {
     const categoryToDelete = await this.getCategoryById(id);
     if (!categoryToDelete) return null;
 
-                                                                                             // this is to block deleting the system default "Other" category
+                                                                              // this is to block deleting the system default "Other" category
     if (categoryToDelete.name.toLowerCase() === 'other') {
       const error = new Error('The default "Other" category cannot be deleted.');
       error.statusCode = 400;

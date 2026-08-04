@@ -6,7 +6,7 @@ exports.up = function (knex) {
   return knex.schema.createTable('transactions', (table) => {
     table.increments('id').primary();
     table                                              //to make it look clean i have basically written it line by line like this but (integer('category_id').unsigned().references('id').inTable('categories').onDelete('RESTRICT')) basically means Links every transaction to a category via a foreign key constraint, unsigned() ensures it matches the positive integer format of categories.id, .onDelete('RESTRICT'): Crucial safety rule! The database will block the user from deleting a category if any transactions are linked to it. This forces the application layer to reassign existing transactions before deleting a category.
-      .integer('category_id')
+      .integer('category_id')       //this here is for the foreign key constraint to link transactions to categories
       .unsigned()
       .notNullable()
       .references('id')
