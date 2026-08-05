@@ -62,11 +62,13 @@ const transactionService = {
 
 
   //this is for the payment split
- // Get count & percentage of transactions per payment method
-  async getPaymentMethodSplit(year) {
+ 
+  // Get count & largest-remainder percentage of transactions per payment method // Get count & percentage of transactions per payment method
+  async getPaymentMethodSplit(startDate, endDate) {
     let query = db('transactions');
-    if (year) {
-      query = query.whereRaw('YEAR(date) = ?', [Number(year)]);
+
+    if (startDate && endDate) {
+      query = query.whereBetween('date', [startDate, endDate]);
     }
 
     const totalCountResult = await query.clone().count('id as total').first();
@@ -77,14 +79,44 @@ const transactionService = {
       .count('id as count')
       .groupBy('payment_method');
 
-    const split = ['Cash', 'Card', 'EFT'].map((method) => {
-      const found = splitResult.find((r) => r.payment_method === method);
+    const methods = ['Cash', 'Card', 'EFT'];
+
+    if (totalTransactions === 0) {
+      return {
+        totalTransactions: 0,
+        split: methods.map((name) => ({ name, count: 0, pct: 0 })),
+      };
+    }
+
+    // 1. Calculate exact percentages and floor values
+    const methodData = methods.map((name) => {
+      const found = splitResult.find((r) => r.payment_method === name);
       const count = found ? Number(found.count) : 0;
-      const percentage = totalTransactions > 0 ? Number(((count / totalTransactions) * 100).toFixed(1)) : 0;
-      return { method, count, percentage };
+      const exactPct = (count / totalTransactions) * 100;
+      const floorPct = Math.floor(exactPct);
+      const remainder = exactPct - floorPct;
+
+      return { name, count, exactPct, pct: floorPct, remainder };
     });
 
-    return { totalTransactions, split };
+    // 2. Largest-remainder adjustment to guarantee 100% total sum
+    const currentSum = methodData.reduce((sum, m) => sum + m.pct, 0);
+    let remainderPoints = 100 - currentSum;
+
+    // Sort by remainder descending to distribute remainder points
+    const sortedByRemainder = [...methodData].sort((a, b) => b.remainder - a.remainder);
+
+    for (let i = 0; i < remainderPoints; i++) {
+      sortedByRemainder[i].pct += 1;
+    }
+
+    // Sort final result by count descending
+    methodData.sort((a, b) => b.count - a.count);
+
+    return {
+      totalTransactions,
+      split: methodData.map(({ name, count, pct }) => ({ name, count, pct })),
+    };
   },
 
 

@@ -215,10 +215,10 @@ const transactionController = {
   },
 
 //this is the get for the payment split
-  async getPaymentSplit(req, res) {                                           //GET 
+ async getPaymentSplit(req, res) {
     try {
-      const { year } = req.query;
-      const data = await transactionService.getPaymentMethodSplit(year);
+      const { startDate, endDate } = req.query;
+      const data = await transactionService.getPaymentMethodSplit(startDate, endDate);
       return res.status(200).json({ success: true, data });
     } catch (error) {
       return res.status(500).json({
