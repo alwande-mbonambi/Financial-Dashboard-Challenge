@@ -60,22 +60,32 @@ const transactionService = {
     return await db('transactions').where({ id }).del();
   },
 
-  async getPaymentSplit(req, res) {
-    try {
-      const { year } = req.query;
-      const data = await transactionService.getPaymentMethodSplit(year);
-      return res.status(200).json({ success: true, data });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve payment method split',
-        error: error.message,
-      });
+
+  //this is for the payment split
+ // Get count & percentage of transactions per payment method
+  async getPaymentMethodSplit(year) {
+    let query = db('transactions');
+    if (year) {
+      query = query.whereRaw('YEAR(date) = ?', [Number(year)]);
     }
+
+    const totalCountResult = await query.clone().count('id as total').first();
+    const totalTransactions = Number(totalCountResult.total) || 0;
+
+    const splitResult = await query
+      .select('payment_method')
+      .count('id as count')
+      .groupBy('payment_method');
+
+    const split = ['Cash', 'Card', 'EFT'].map((method) => {
+      const found = splitResult.find((r) => r.payment_method === method);
+      const count = found ? Number(found.count) : 0;
+      const percentage = totalTransactions > 0 ? Number(((count / totalTransactions) * 100).toFixed(1)) : 0;
+      return { method, count, percentage };
+    });
+
+    return { totalTransactions, split };
   },
-  
-
-
 
 
 
