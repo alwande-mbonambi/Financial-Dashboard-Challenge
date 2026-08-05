@@ -213,6 +213,21 @@ const transactionController = {
       });
     }
   },
+
+//this is the get for the payment split
+  async getPaymentSplit(req, res) {                                           //GET 
+    try {
+      const { year } = req.query;
+      const data = await transactionService.getPaymentMethodSplit(year);
+      return res.status(200).json({ success: true, data });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve payment method split',
+        error: error.message,
+      });
+    }
+  },
 };
 
 module.exports = transactionController;
