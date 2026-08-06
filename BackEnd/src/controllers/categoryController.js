@@ -118,7 +118,7 @@ const categoryController = {
   },
 
   
-  async delete(req, res) {                                                   //DELETE /api/categories/:id - Delete a category by ID
+  async delete(req, res) {
     try {
       const { id } = req.params;
       const result = await categoryService.deleteCategory(id);
@@ -135,7 +135,15 @@ const categoryController = {
         message: result.message,
       });
     } catch (error) {
-      
+      if (error.statusCode === 409) {
+        return res.status(409).json({
+          success: false,
+          message: error.message,
+          code: error.code,
+          transactionCount: error.transactionCount,
+        });
+      }
+
       if (error.statusCode === 400) {
         return res.status(400).json({
           success: false,
@@ -149,7 +157,7 @@ const categoryController = {
         error: error.message,
       });
     }
-  }
+  },
 };
 
 module.exports = categoryController;
