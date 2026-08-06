@@ -1,32 +1,40 @@
-
-services:  #This section tells the individual containers (apps) that Docker will run for the project. MySQL and the Backend
+services:
   mysql:
-    image: mysql:8      # downloading the official MySQL version 8 image from Docker Hub instead of installing MySQL on my PC.
+    image: mysql:8
     restart: unless-stopped
-    environment:                  # Automatically configuring the database settings when the container starts up
+    environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - '${DB_PORT}:3306'   # this is to map port 3306 inside the container to port 3306 on my local computer so tools like Knex or VS Code can connect to it
+      - '${DB_PORT}:3306'
     volumes:
-      - mysql_data:/var/lib/mysql    #for data persistence, so that the data is not lost when the container is stopped or removed. The volume is named mysql_data , it's mounted to the /var/lib/mysql directory inside the container where MySQL stores its data files
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-#I havent created the Dockerfile yet for the backend, so I will comment out the backend service for now. Once I create the Dockerfile, I will uncomment this section to build and run the backend container.
-
-#   backend:
-#     build: ./BackEnd  #for docker to look inside my BackEnd file for the Dockerfile to build my Express Server
-#     depends_on:
-#       - mysql            #to start the backend container only after the mysql container is up and running
-#     environment:
-#       DB_HOST: mysql
-#       DB_USER: ${DB_USER}
-#       DB_PASSWORD: ${DB_PASSWORD}
-#       DB_NAME: ${DB_NAME}
-#       JWT_SECRET: ${JWT_SECRET}
-#     ports:
-#       - '3000:3000'
+      
+#  backend:
+#    build: ./BackEnd
+#    restart: unless-stopped
+#    depends_on:
+#      mysql:
+#        condition: service_healthy
+#    environment:
+#      PORT: 5000
+#      DB_HOST: mysql
+#      DB_PORT: 3306
+#      DB_USER: ${DB_USER}
+#      DB_PASSWORD: ${DB_PASSWORD}
+#      DB_NAME: ${DB_NAME}
+#      JWT_SECRET: ${JWT_SECRET}
+#    ports:
+#      - '5000:5000'
+    
 
 volumes:
   mysql_data:

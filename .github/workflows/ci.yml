@@ -1,0 +1,47 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: BackEnd/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./BackEnd
+
+      - name: Run Integration Tests
+        run: npm test
+        working-directory: ./BackEnd
+        env:
+          NODE_ENV: test
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: root
+          DB_PASSWORD: root
+          DB_NAME: test_db
+          JWT_SECRET: super-secret-ci-key
