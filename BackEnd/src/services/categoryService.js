@@ -61,9 +61,7 @@ const categoryService = {
     const categoryToDelete = await this.getCategoryById(id);
     
     if (categoryToDelete.name.toLowerCase() === 'other') {
-      const error = new Error('The default "Other" category cannot be deleted.');
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(400, 'The default "Other" category cannot be deleted.', 'CANNOT_DELETE_DEFAULT');
     }
 
     // Check count of transactions linked to this category
@@ -76,9 +74,7 @@ const categoryService = {
 
     // Block deletion if transactions exist
     if (transactionCount > 0) {
-      const error = new Error('Re-assign transactions to another category, or auto-reassign to Other.');
-      error.statusCode = 409;
-      error.code = 'CATEGORY_HAS_TRANSACTIONS';
+      const error = new ApiError(409, 'Re-assign transactions to another category, or auto-reassign to Other.', 'CATEGORY_HAS_TRANSACTIONS');
       error.transactionCount = transactionCount;
       throw error;
     }
@@ -98,9 +94,7 @@ const categoryService = {
     const categoryToDelete = await this.getCategoryById(id);
 
     if (categoryToDelete.name.toLowerCase() === 'other') {
-      const error = new Error('The default "Other" category cannot be deleted.');
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(400, 'The default "Other" category cannot be deleted.', 'CANNOT_DELETE_DEFAULT');
     }
 
     if (Number(id) === Number(targetCategoryId)) {
@@ -111,9 +105,7 @@ const categoryService = {
 
     const targetCategory = await this.getCategoryById(targetCategoryId);
     if (!targetCategory) {
-      const error = new Error('Target category does not exist.');
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(400, 'Cannot reassign transactions to the same category being deleted.', 'INVALID_REASSIGNMENT');
     }
 
     return await db.transaction(async (trx) => {
@@ -138,9 +130,7 @@ const categoryService = {
     const categoryToDelete = await this.getCategoryById(id);
 
     if (categoryToDelete.name.toLowerCase() === 'other') {
-      const error = new Error('The default "Other" category cannot be deleted.');
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(400, 'The default "Other" category cannot be deleted.', 'CANNOT_DELETE_DEFAULT');
     }
 
     return await db.transaction(async (trx) => {
