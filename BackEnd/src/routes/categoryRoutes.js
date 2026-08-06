@@ -15,5 +15,7 @@ router.post('/', categoryController.create);                        // POST /api
 router.put('/:id', categoryController.update);                      // PUT /api/categories/:id - Update category by ID
 
 router.delete('/:id', categoryController.delete);                      // DELETE /api/categories/:id - Delete category by ID
+router.put('/:id/reassign', categoryController.reassign);           // PUT /api/categories/:id/reassign - Reassign transactions to another category
+router.post('/:id/reassign-to-other', categoryController.reassignToOther);   // POST /api/categories/:id/reassign-to-other - Reassign transactions to "Other" category and delete the original category
 
 module.exports = router;

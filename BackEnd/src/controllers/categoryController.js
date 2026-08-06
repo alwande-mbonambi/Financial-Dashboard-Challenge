@@ -158,6 +158,79 @@ const categoryController = {
       });
     }
   },
+
+  async reassign(req, res) {
+    try {
+      const { id } = req.params;
+      const { targetCategoryId } = req.body;
+
+      if (!targetCategoryId) {
+        return res.status(400).json({
+          success: false,
+          message: 'targetCategoryId is required for reassignment',
+        });
+      }
+
+      const result = await categoryService.reassignAndDelete(id, targetCategoryId);
+
+      if (!result) {
+        return res.status(404).json({
+          success: false,
+          message: `Category with ID ${id} not found`,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error) {
+      if (error.statusCode === 400) {
+        return res.status(400).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to reassign transactions and delete category',
+        error: error.message,
+      });
+    }
+  },
+
+  async reassignToOther(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await categoryService.reassignToOtherAndDelete(id);
+
+      if (!result) {
+        return res.status(404).json({
+          success: false,
+          message: `Category with ID ${id} not found`,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error) {
+      if (error.statusCode === 400) {
+        return res.status(400).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to reassign transactions to Other and delete category',
+        error: error.message,
+      });
+    }
+  },
 };
 
 module.exports = categoryController;
