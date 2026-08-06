@@ -1,4 +1,5 @@
 const db = require('../config/db'); 
+const { ApiError } = require('../utils/ApiError');
 
 const transactionService = {
   async getAllTransactions() {
@@ -19,7 +20,9 @@ const transactionService = {
   },
 
   async getTransactionById(id) {                                     // this is to fetch single transaction by ID
-    return await db('transactions')
+
+    
+    const transaction = await db('transactions')
       .join('categories', 'transactions.category_id', 'categories.id')
       .where('transactions.id', id)
       .select(
@@ -34,6 +37,13 @@ const transactionService = {
         'categories.name as category_name'
       )
       .first();
+
+    if (!transaction) {
+      throw new ApiError(404, `Transaction with ID ${id} not found`, 'TRANSACTION_NOT_FOUND');
+    }
+    
+    return transaction;
+    
   },
 
   async createTransaction(transactionData) {                        // this is to reate a new transaction
@@ -42,6 +52,8 @@ const transactionService = {
   },       
 
   async updateTransaction(id, transactionData) {                                          // this is to update a transaction
+    await this.getTransactionById(id);
+   
     const fieldsToUpdate = {};
     if (transactionData.amount !== undefined) fieldsToUpdate.amount = transactionData.amount;
     if (transactionData.type !== undefined) fieldsToUpdate.type = transactionData.type;
@@ -57,6 +69,7 @@ const transactionService = {
 
   
   async deleteTransaction(id) {                            // Delete transaction
+    await this.getTransactionById(id);
     return await db('transactions').where({ id }).del();
   },
 
@@ -88,7 +101,7 @@ const transactionService = {
       };
     }
 
-    // 1. Calculate exact percentages and floor values
+   // 1. Calculate exact percentages and floor values
     const methodData = methods.map((name) => {
       const found = splitResult.find((r) => r.payment_method === name);
       const count = found ? Number(found.count) : 0;
@@ -119,9 +132,6 @@ const transactionService = {
     };
   },
 
-
-
-  
 };
 
 module.exports = transactionService;

@@ -2,7 +2,7 @@ const summaryService = require('../services/summaryService');
 
 const summaryController = {
   // GET /api/summary?startDate=2026-01-01&endDate=2026-01-31&compareStartDate=2025-01-01&compareEndDate=2025-01-31
-  async getSummary(req, res) {
+  async getSummary(req, res, next) {
     try {
       const { startDate, endDate, compareStartDate, compareEndDate } = req.query;
 
@@ -16,11 +16,7 @@ const summaryController = {
         data,
       });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve dashboard summary',
-        error: error.message,
-      });
+      next(error);
     }
   },
 };

@@ -1,9 +1,10 @@
 const transactionService = require('../services/transactionService');
 const categoryService = require('../services/categoryService');
+const { ApiError } = require('../utils/ApiError');
 
 const transactionController = {
 
-  async getAll(req, res) {                                                 // GET /api/transactions
+  async getAll(req, res, next) {                                                 // GET /api/transactions
     try {
       const transactions = await transactionService.getAllTransactions();
       return res.status(200).json({
@@ -11,89 +12,58 @@ const transactionController = {
         data: transactions,
       });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve transactions',
-        error: error.message,
-      });
+      next(error);
     }
   },
 
  
-  async getById(req, res) {                                                    // GET /api/transactions/:id
+  async getById(req, res, next) {                                                    // GET /api/transactions/:id
     try {
       const { id } = req.params;
       const transaction = await transactionService.getTransactionById(id);
-
-      if (!transaction) {
-        return res.status(404).json({
-          success: false,
-          message: `Transaction with ID ${id} not found`,
-        });
-      }
 
       return res.status(200).json({
         success: true,
         data: transaction,
       });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve transaction',
-        error: error.message,
-      });
+      next(error);
     }
   },
 
 
 
-  async create(req, res) {                                                         // POST /api/transactions
+  async create(req, res, next) {                                                         // POST /api/transactions
     try {
       const { amount, type, reference, notes, payment_method, date, category_id } = req.body;
 
       // Validate required fields
       
-    if (amount === undefined || amount === null || !type || !date || !category_id || !payment_method) {
-      return res.status(400).json({
-        success: false,
-        message: 'amount, type, date, category_id, and payment_method are required fields.',
-      });
-    }
+      if (amount === undefined || amount === null || !type || !date || !category_id || !payment_method) {
+        throw new ApiError(400, 'amount, type, date, category_id, and payment_method are required fields.', 'VALIDATION_ERROR');
+      }
 
-    const numericAmount = Number(amount);
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Amount must be a positive number greater than 0.',
-      });
-    }
+      const numericAmount = Number(amount);
+      if (isNaN(numericAmount) || numericAmount <= 0) {
+        throw new ApiError(400, 'Amount must be a positive number greater than 0.', 'VALIDATION_ERROR');
+      }
 
       if (!['income', 'expense'].includes(type)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Type must be either "income" or "expense".',
-        });
-
+        throw new ApiError(400, 'Type must be either "income" or "expense".', 'VALIDATION_ERROR');
       }
 
       if (!['Cash', 'Card', 'EFT'].includes(payment_method)) {
-        return res.status(400).json({
-          success: false,
-          message: 'payment_method must be either "Cash", "Card", or "EFT".',
-        });
+        throw new ApiError(400, 'payment_method must be either "Cash", "Card", or "EFT".', 'VALIDATION_ERROR');
       }
 
 
       // Verify foreign key category exists
-      const existingCategory = await categoryService.getCategoryById(category_id);
+     const existingCategory = await categoryService.getCategoryById(category_id);
       if (!existingCategory) {
-        return res.status(400).json({
-          success: false,
-          message: `Category with ID ${category_id} does not exist.`,
-        });
+        throw new ApiError(400, `Category with ID ${category_id} does not exist.`, 'VALIDATION_ERROR');
       }
 
-      const newTransaction = await transactionService.createTransaction({
+     const newTransaction = await transactionService.createTransaction({
         amount: numericAmount,
         type,
         reference: reference || null,
@@ -102,67 +72,48 @@ const transactionController = {
         date,
         category_id,
       });
+  
+
+      
 
       return res.status(201).json({
         success: true,
         data: newTransaction,
       });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to create transaction',
-        error: error.message,
-      });
+      next(error);
     }
   },
 
   
-  async update(req, res) {                                                            // PUT /api/transactions/:id
+  async update(req, res, next) {                                                            // PUT /api/transactions/:id
     try {  
       const { id } = req.params;
       const { amount, type, reference, notes, payment_method, date, category_id } = req.body;
 
       let numericAmount;
-    if (amount !== undefined) {
-      numericAmount = Number(amount);
-      if (isNaN(numericAmount) || numericAmount <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Amount must be a positive number greater than 0.',
-        });
-      }
-    }
-
-      const existingTransaction = await transactionService.getTransactionById(id);
-      if (!existingTransaction) {
-        return res.status(404).json({
-          success: false,
-          message: `Transaction with ID ${id} not found`,
-        });
+      if (amount !== undefined) {
+        numericAmount = Number(amount);
+        if (isNaN(numericAmount) || numericAmount <= 0) {
+          throw new ApiError(400, 'Amount must be a positive number greater than 0.', 'VALIDATION_ERROR');
+        }
+      
       }
 
       if (type && !['income', 'expense'].includes(type)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Type must be either "income" or "expense".',
-        });
+        throw new ApiError(400, 'Type must be either "income" or "expense".', 'VALIDATION_ERROR');
+ 
       }
 
       if (category_id) {
         const existingCategory = await categoryService.getCategoryById(category_id);
         if (!existingCategory) {
-          return res.status(400).json({
-            success: false,
-            message: `Category with ID ${category_id} does not exist.`,
-          });
-        }
+          throw new ApiError(400, `Category with ID ${category_id} does not exist.`, 'VALIDATION_ERROR');
+        }            
       }
 
       if (payment_method && !['Cash', 'Card', 'EFT'].includes(payment_method)) {
-        return res.status(400).json({
-          success: false,
-          message: 'payment_method must be either "Cash", "Card", or "EFT".',
-        });
+        throw new ApiError(400, 'payment_method must be either "Cash", "Card", or "EFT".', 'VALIDATION_ERROR');
       }
 
       const updatedTransaction = await transactionService.updateTransaction(id, {
@@ -180,54 +131,37 @@ const transactionController = {
         data: updatedTransaction,
       });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to update transaction',
-        error: error.message,
-      });
+      next(error);
     }
   },
 
   
-  async delete(req, res) {                                                            // DELETE /api/transactions/:id
+  async delete(req, res, next) {                                                            // DELETE /api/transactions/:id
     try { 
       const { id } = req.params;
       const deletedRows = await transactionService.deleteTransaction(id);
-
-      if (!deletedRows) {
-        return res.status(404).json({
-          success: false,
-          message: `Transaction with ID ${id} not found`,
-        });
-      }
 
       return res.status(200).json({
         success: true,
         message: `Transaction with ID ${id} deleted successfully`,
       });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to delete transaction',
-        error: error.message,
-      });
+      next(error);
     }
   },
 
 //this is the get for the payment split
- async getPaymentSplit(req, res) {
+ async getPaymentSplit(req, res, next) {
     try {
       const { startDate, endDate } = req.query;
       const data = await transactionService.getPaymentMethodSplit(startDate, endDate);
       return res.status(200).json({ success: true, data });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve payment method split',
-        error: error.message,
-      });
+    } 
+      catch (error) {
+      next(error);
     }
-  },
+  }
+  
 };
 
 module.exports = transactionController;

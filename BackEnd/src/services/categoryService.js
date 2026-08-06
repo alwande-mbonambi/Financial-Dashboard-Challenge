@@ -1,4 +1,5 @@
 const db = require('../config/db');                                      // im importing my Knex config database connection pool from the db.js file in the config folder.  This is so im using it to query the database in this service file.  I'll use this db object to perform CRUD operations on the categories table in the database.
+const { ApiError } = require('../utils/ApiError');
 /**
  *
  */
@@ -11,9 +12,6 @@ const categoryService = {
     return await db('categories').select('*').orderBy('name', 'asc');
   },
 
-
-
-
   /**
    * 
    * @param {number} id 
@@ -21,7 +19,11 @@ const categoryService = {
    */
   async getCategoryById(id) {                                                //to fetch a single category by its ID
     const category = await db('categories').where({ id }).first();           //.first() to ensure knex automatically unpacks the first item out of that array for you and appends LIMIT 1 to the SQL query      
-    return category || null;
+    if (!category) {
+    throw new ApiError(404, `Category with ID ${id} not found`, 'CATEGORY_NOT_FOUND');
+  }
+
+  return category;
   },
 
   /**
@@ -57,8 +59,7 @@ const categoryService = {
    */
   async deleteCategory(id) {
     const categoryToDelete = await this.getCategoryById(id);
-    if (!categoryToDelete) return null;
-
+    
     if (categoryToDelete.name.toLowerCase() === 'other') {
       const error = new Error('The default "Other" category cannot be deleted.');
       error.statusCode = 400;
@@ -95,7 +96,6 @@ const categoryService = {
    */
   async reassignAndDelete(id, targetCategoryId) {
     const categoryToDelete = await this.getCategoryById(id);
-    if (!categoryToDelete) return null;
 
     if (categoryToDelete.name.toLowerCase() === 'other') {
       const error = new Error('The default "Other" category cannot be deleted.');
@@ -136,7 +136,6 @@ const categoryService = {
    */
   async reassignToOtherAndDelete(id) {
     const categoryToDelete = await this.getCategoryById(id);
-    if (!categoryToDelete) return null;
 
     if (categoryToDelete.name.toLowerCase() === 'other') {
       const error = new Error('The default "Other" category cannot be deleted.');

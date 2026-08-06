@@ -1,8 +1,9 @@
 const budgetService = require('../services/budgetService');
+const { ApiError } = require('../utils/ApiError');
 
 const budgetController = {
   
-  async getByYear(req, res) {
+  async getByYear(req, res, next) {
     try {
       const year = Number(req.query.year) || new Date().getFullYear();          //GET     // this is to get the budget for a specific year, defaulting to the current year if not provided
       const budgets = await budgetService.getBudgetsByYear(year);
@@ -12,24 +13,18 @@ const budgetController = {
         data: budgets,
       });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve budgets',
-        error: error.message,
-      });
+      next(error);
     }
+    
   },
 
   
-  async setBudget(req, res) {                                                     //this is to set for setting a budget - PUT /api/budgets
+  async setBudget(req, res, next) {                                                     //this is to set for setting a budget - PUT /api/budgets
     try {
       const { category_id, year, amount } = req.body;
 
       if (!year || amount === undefined || amount < 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid year and non-negative amount are required.',
-        });
+        throw new ApiError(400, 'Valid year and non-negative amount are required.', 'VALIDATION_ERROR');
       }
 
       const updatedBudgets = await budgetService.setBudget({
@@ -43,43 +38,32 @@ const budgetController = {
         data: updatedBudgets,
       });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to update budget',
-        error: error.message,
-      });
+      next(error);
     }
   },
 
   
-async deleteBudget(req, res) {                                                                    // DELETE /api/budgets?year=2026&categoryId=3
-  try {
-    const { year, categoryId } = req.query;
+  async deleteBudget(req, res, next) {                                                                    // DELETE /api/budgets?year=2026&categoryId=3
+    try {
+      const { year, categoryId } = req.query;
 
-    if (!year) {
-      return res.status(400).json({
-        success: false,
-        message: 'Year query parameter is required.',
+      if (!year) {
+        throw new ApiError(400, 'Year query parameter is required.', 'VALIDATION_ERROR');
+      }
+
+      const updatedBudgets = await budgetService.deleteBudget(
+       Number(year),
+       categoryId ? Number(categoryId) : null
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: updatedBudgets,
       });
+    } catch (error) {
+        next(error);
     }
-
-    const updatedBudgets = await budgetService.deleteBudget(
-      Number(year),
-      categoryId ? Number(categoryId) : null
-    );
-
-    return res.status(200).json({
-      success: true,
-      data: updatedBudgets,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to delete budget',
-      error: error.message,
-    });
-  }
-},
+  },
 };
 
 module.exports = budgetController;

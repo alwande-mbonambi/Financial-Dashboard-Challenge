@@ -1,16 +1,15 @@
 const authService = require('../services/authService');
+const { ApiError } = require('../utils/ApiError');
 
 const authController = {
-  async register(req, res) {
+  async register(req, res,next) {
     try {
       const { email, password } = req.body;
 
       if (!email || !password) {
-        return res.status(400).json({
-          success: false,
-          message: 'Email and password are required.',
-        });
+        throw new ApiError(400, 'Email and password are required.', 'VALIDATION_ERROR');
       }
+      
 
       const user = await authService.register(email, password);
       return res.status(201).json({
@@ -19,23 +18,18 @@ const authController = {
         data: user,
       });
     } catch (error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
+      next(error);
     }
   },
 
-  async login(req, res) {
+  async login(req, res, next) {
     try {
       const { email, password } = req.body;
 
       if (!email || !password) {
-        return res.status(400).json({
-          success: false,
-          message: 'Email and password are required.',
-        });
+        throw new ApiError(400, 'Email and password are required.', 'VALIDATION_ERROR');
       }
+      
 
       const data = await authService.login(email, password);
       return res.status(200).json({
@@ -43,11 +37,9 @@ const authController = {
         data,
       });
     } catch (error) {
-      return res.status(401).json({
-        success: false,
-        message: error.message,
-      });
-    }
+      next(error);
+   }
+    
   },
 };
 
