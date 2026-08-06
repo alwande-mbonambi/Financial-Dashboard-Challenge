@@ -5,6 +5,8 @@ const budgetRoutes = require('./routes/budgetRoutes');
 const summaryRoutes = require('./routes/summaryRoutes');
 const authRoutes = require('./routes/authRoutes');
 const { requireAuth } = require('./middleware/authMiddleware');
+const { errorHandler } = require('./middleware/errorHandler');
+
 
 const cors = require('cors');                                        //cors is for allowing cross-origin requests from the frontend to the backend.  This is necessary when the frontend and backend are running on different ports or domains, which is common in development environments.
 const app = express();
@@ -28,6 +30,7 @@ app.use('/api/budgets', requireAuth, budgetRoutes);                  // Connecti
 app.use('/api/summary', requireAuth, summaryRoutes);                 // Connecting my summary routes to the URL path /api/summary
 
 
+app.use(errorHandler);
 app.listen(5000, () => {
   console.log('Server is running on http://localhost:5000');
 });
