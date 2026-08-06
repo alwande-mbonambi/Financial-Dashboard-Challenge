@@ -51,26 +51,102 @@ const categoryService = {
   },
 
   /**
-   * 
+   * Delete category if zero transactions exist, otherwise throw 409 block
    * @param {number} id
-   * @returns {Promise<Object|null>}                                             //True if deleted, false if category didn't exist
+   * @returns {Promise<Object|null>}
    */
-                                                                              // to safely delete category & reassign transactions to "Other"
   async deleteCategory(id) {
     const categoryToDelete = await this.getCategoryById(id);
     if (!categoryToDelete) return null;
 
-                                                                              // this is to block deleting the system default "Other" category
     if (categoryToDelete.name.toLowerCase() === 'other') {
       const error = new Error('The default "Other" category cannot be deleted.');
       error.statusCode = 400;
       throw error;
     }
 
-    return await db.transaction(async (trx) => {                                 //
-      
-      let defaultCategory = await trx('categories')                                //1.to find or create default "Other" category matching the type
-        .where({ type: categoryToDelete.type }) 
+    // Check count of transactions linked to this category
+    const transactionCountResult = await db('transactions')
+      .where({ category_id: id })
+      .count('id as count')
+      .first();
+
+    const transactionCount = Number(transactionCountResult?.count) || 0;
+
+    // Block deletion if transactions exist
+    if (transactionCount > 0) {
+      const error = new Error('Re-assign transactions to another category, or auto-reassign to Other.');
+      error.statusCode = 409;
+      error.code = 'CATEGORY_HAS_TRANSACTIONS';
+      error.transactionCount = transactionCount;
+      throw error;
+    }
+
+    // Plain delete when 0 transactions are attached
+    await db('categories').where({ id }).del();
+    return { message: 'Category successfully deleted.' };
+  },
+
+  /**
+   * Reassign transactions to a specified target category, then delete source category
+   * @param {number} id
+   * @param {number} targetCategoryId
+   * @returns {Promise<Object|null>}
+   */
+  async reassignAndDelete(id, targetCategoryId) {
+    const categoryToDelete = await this.getCategoryById(id);
+    if (!categoryToDelete) return null;
+
+    if (categoryToDelete.name.toLowerCase() === 'other') {
+      const error = new Error('The default "Other" category cannot be deleted.');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (Number(id) === Number(targetCategoryId)) {
+      const error = new Error('Cannot reassign transactions to the same category being deleted.');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const targetCategory = await this.getCategoryById(targetCategoryId);
+    if (!targetCategory) {
+      const error = new Error('Target category does not exist.');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    return await db.transaction(async (trx) => {
+      await trx('transactions')
+        .where({ category_id: id })
+        .update({ category_id: targetCategoryId });
+
+      await trx('categories').where({ id }).del();
+
+      return {
+        message: `Transactions reassigned to "${targetCategory.name}" and category deleted successfully.`,
+      };
+    });
+  },
+
+  /**
+   * 
+   * @param {number} id                                                    //this is to find-or-create default "Other" category, reassign transactions, then delete category
+   * @returns {Promise<Object|null>}
+   */
+  async reassignToOtherAndDelete(id) {
+    const categoryToDelete = await this.getCategoryById(id);
+    if (!categoryToDelete) return null;
+
+    if (categoryToDelete.name.toLowerCase() === 'other') {
+      const error = new Error('The default "Other" category cannot be deleted.');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    return await db.transaction(async (trx) => {
+      let defaultCategory = await trx('categories')
+        .where({ type: categoryToDelete.type })
         .whereRaw('LOWER(name) = ?', ['other'])
         .first();
 
@@ -79,19 +155,17 @@ const categoryService = {
           name: 'Other',
           type: categoryToDelete.type,
         });
-        defaultCategory = { id: otherId, name: 'Other' };
+        defaultCategory = { id: otherId, name: 'Other', type: categoryToDelete.type };
       }
 
-      
-      await trx('transactions')                                                     // 2. to reassign transactions linked to target category over to "Other"
+      await trx('transactions')
         .where({ category_id: id })
         .update({ category_id: defaultCategory.id });
 
-      
-      await trx('categories').where({ id }).del();  //deleting the requested category
+      await trx('categories').where({ id }).del();
 
       return {
-        message: `Category successfully deleted. Linked transactions were reassigned to "${defaultCategory.name}".`,
+        message: `Transactions reassigned to "${defaultCategory.name}" and category deleted successfully.`,
       };
     });
   },
