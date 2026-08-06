@@ -58,8 +58,9 @@ const transactionController = {
 
 
       // Verify foreign key category exists
-     const existingCategory = await categoryService.getCategoryById(category_id);
-      if (!existingCategory) {
+      try {
+        await categoryService.getCategoryById(category_id);
+      } catch (err) {
         throw new ApiError(400, `Category with ID ${category_id} does not exist.`, 'VALIDATION_ERROR');
       }
 
@@ -106,10 +107,11 @@ const transactionController = {
       }
 
       if (category_id) {
-        const existingCategory = await categoryService.getCategoryById(category_id);
-        if (!existingCategory) {
-          throw new ApiError(400, `Category with ID ${category_id} does not exist.`, 'VALIDATION_ERROR');
-        }            
+       try {
+        await categoryService.getCategoryById(category_id);
+        } catch (err) {
+        throw new ApiError(400, `Category with ID ${category_id} does not exist.`, 'VALIDATION_ERROR');
+        }
       }
 
       if (payment_method && !['Cash', 'Card', 'EFT'].includes(payment_method)) {

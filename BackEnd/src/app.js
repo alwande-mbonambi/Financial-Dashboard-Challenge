@@ -31,8 +31,7 @@ app.use('/api/summary', requireAuth, summaryRoutes);                 // Connecti
 
 
 app.use(errorHandler);
-app.listen(5000, () => {
-  console.log('Server is running on http://localhost:5000');
-});
+module.exports = app;
 
-//currently just testing my API's    - http://localhost:5000//api/transactions
+//moved app.listen to Server.js so that supertest can import app without starting a port collision
+
