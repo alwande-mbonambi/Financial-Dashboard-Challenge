@@ -28,6 +28,23 @@ module.exports = {
     migrations: { directory: "./migrations" },
     seeds: { directory: "./seeds" },
   },
-};
+
 
 //process.env is a global object that provides access to the environment variables of the current process. In this case, i'm using it to access the database connection details that are stored in the .env file. The dotenv package loads these variables into process.env when the application starts, allowing us to use them throughout our code without hardcoding sensitive information like database credentials.
+
+
+
+production: {
+  client: "mysql2",
+  connection: {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+  },
+  migrations: { directory: "./migrations" },
+  seeds: { directory: "./seeds" },
+},
+
+};
