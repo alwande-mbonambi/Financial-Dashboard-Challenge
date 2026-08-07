@@ -2,9 +2,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main, dev, master ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main, dev, master ]
 
 jobs:
   test:
@@ -44,4 +44,5 @@ jobs:
           DB_USER: root
           DB_PASSWORD: root
           DB_NAME: test_db
+          DB_NAME_TEST: test_db
           JWT_SECRET: super-secret-ci-key
