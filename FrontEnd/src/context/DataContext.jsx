@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   listCategories,
   createCategory as apiCreateCategory,
@@ -112,7 +112,6 @@ export function DataProvider({ children }) {
         await fetchCategories()
         return result
       } catch (err) {
-        // Re-throw so caller can check for CATEGORY_HAS_TRANSACTIONS or handle error
         throw err
       }
     },
@@ -218,6 +217,30 @@ export function DataProvider({ children }) {
     []
   )
 
+  const deleteOverallBudget = useCallback(
+    async (year) => {
+      return await removeBudget(year, null)
+    },
+    [removeBudget]
+  )
+
+  const listOverallBudgetYears = useCallback(() => {
+    return Object.keys(budgetsByYear)
+      .map(Number)
+      .filter((y) => (budgetsByYear[y]?.overallBudget || 0) > 0)
+      .sort((a, b) => b - a)
+  }, [budgetsByYear])
+
+  const earliestTransactionYear = useMemo(() => {
+    if (!transactions.length) return new Date().getFullYear()
+    return Math.min(...transactions.map((t) => new Date(t.date).getFullYear()))
+  }, [transactions])
+
+  const latestTransactionYear = useMemo(() => {
+    if (!transactions.length) return new Date().getFullYear()
+    return Math.max(...transactions.map((t) => new Date(t.date).getFullYear()))
+  }, [transactions])
+
   const value = {
     categories,
     transactions,
@@ -239,6 +262,10 @@ export function DataProvider({ children }) {
     setOverallBudget,
     setCategoryBudget,
     removeBudget,
+    deleteOverallBudget,
+    listOverallBudgetYears,
+    earliestTransactionYear,
+    latestTransactionYear,
     toasts,
     notify,
     dismissToast,
