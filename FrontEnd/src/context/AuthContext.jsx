@@ -1,18 +1,20 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { login as apiLogin } from '../api/auth.js';
 import { setAuthToken } from '../api/client.js';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => sessionStorage.getItem('authToken'));
-
-  useEffect(() => {
+  // Read + apply any existing token synchronously during the initial render
+  // (not in a useEffect) so it's set on the API client BEFORE any child
+  // provider's mount effects (e.g. DataProvider's initial fetches) run.
+  const [token, setToken] = useState(() => {
     const storedToken = sessionStorage.getItem('authToken');
     if (storedToken) {
       setAuthToken(storedToken);
     }
-  }, []);
+    return storedToken;
+  });
 
   const login = async (email, password) => {
     const data = await apiLogin(email, password);

@@ -16,7 +16,7 @@ app.use(express.json());                                             // to allow
 
 
 
-app.use(cors({ origin: 'http://localhost:5173' }));                  // 1. Mount CORS middleware (allows Vite frontend at http://localhost:5173 to communicate)
+app.use(cors({ origin: process.env.CORS_ORIGIN?.split(',') || 'http://localhost:5173' }));                  // 1. Mount CORS middleware (allows Vite frontend at http://localhost:5173 to communicate)
 
 app.use('/api/auth', authRoutes);                                    //  Public route
 
