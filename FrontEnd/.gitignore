@@ -15,6 +15,7 @@ dist-ssr/
 .vite/                      #vite cache folder
 .eslintcache
 
+*.log
 
 .DS_Store               #macOS system files
 Thumbs.db              #Windows system files
