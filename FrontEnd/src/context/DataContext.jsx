@@ -30,6 +30,20 @@ export function DataProvider({ children }) {
   const [transactions, setTransactions] = useState([])
   const [budgetsByYear, setBudgetsByYear] = useState({})
 
+  const [dashboardFilters, setDashboardFiltersState] = useState({
+    primaryRange: 'this_month',
+    customStart: '',
+    customEnd: '',
+    compareTo: 'none',
+    compareCustomStart: '',
+    compareCustomEnd: '',
+    categoryView: 'income',
+  })
+
+  const setDashboardFilters = useCallback((patch) => {
+    setDashboardFiltersState((prev) => ({ ...prev, ...patch }))
+  }, [])
+
   // toast notifications 
   const [toasts, setToasts] = useState([])
   const toastTimers = useRef({})
@@ -190,6 +204,18 @@ export function DataProvider({ children }) {
     [budgetsByYear]
   )
 
+  const getCategoryBudgetAllYears = useCallback(
+    (categoryId) => {
+      return Object.values(budgetsByYear).reduce((sum, yearData) => {
+        const found = (yearData?.categoryBudgets || []).find(
+          (b) => Number(b.categoryId) === Number(categoryId)
+        )
+        return sum + (found ? Number(found.amount) : 0)
+      }, 0)
+    },
+    [budgetsByYear]
+  )
+
   const setOverallBudget = useCallback(
     async (year, amount) => {
       const updated = await apiSetBudget({ categoryId: null, year, amount })
@@ -245,6 +271,8 @@ export function DataProvider({ children }) {
     categories,
     transactions,
     budgetsByYear,
+    dashboardFilters,
+    setDashboardFilters,
     fetchCategories,
     fetchTransactions,
     fetchBudgetsByYear,
@@ -259,6 +287,7 @@ export function DataProvider({ children }) {
     getRecentTransactions,
     getOverallBudget,
     getCategoryBudget,
+    getCategoryBudgetAllYears,
     setOverallBudget,
     setCategoryBudget,
     removeBudget,
