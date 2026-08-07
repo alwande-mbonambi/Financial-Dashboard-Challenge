@@ -7,6 +7,12 @@ import {
   reassignCategory as apiReassignCategory,
   reassignCategoryToOther as apiReassignCategoryToOther,
 } from '../api/categories.js'
+import {
+  listTransactions,
+  createTransaction as apiCreateTransaction,
+  updateTransaction as apiUpdateTransaction,
+  deleteTransaction as apiDeleteTransaction,
+} from '../api/transactions.js'
 
 const DataContext = createContext(null)
 
@@ -16,6 +22,7 @@ function makeId() {
 
 export function DataProvider({ children }) {
   const [categories, setCategories] = useState([])
+  const [transactions, setTransactions] = useState([])
 
   // toast notifications 
   const [toasts, setToasts] = useState([])
@@ -38,7 +45,7 @@ export function DataProvider({ children }) {
     }
   }, [])
 
-  // categories
+  // fetchers
   const fetchCategories = useCallback(async () => {
     try {
       const data = await listCategories()
@@ -48,10 +55,21 @@ export function DataProvider({ children }) {
     }
   }, [])
 
+  const fetchTransactions = useCallback(async () => {
+    try {
+      const data = await listTransactions()
+      setTransactions(data)
+    } catch (err) {
+      console.error('Failed to fetch transactions:', err)
+    }
+  }, [])
+
   useEffect(() => {
     fetchCategories()
-  }, [fetchCategories])
+    fetchTransactions()
+  }, [fetchCategories, fetchTransactions])
 
+  //categories
   const addCategory = useCallback(
     async (cat) => {
       const result = await apiCreateCategory(cat)
@@ -87,29 +105,72 @@ export function DataProvider({ children }) {
   const reassignCategory = useCallback(
     async (id, targetCategoryId) => {
       const result = await apiReassignCategory(id, targetCategoryId)
-      await fetchCategories()
+      await Promise.all([fetchCategories(), fetchTransactions()])
       return result
     },
-    [fetchCategories]
+    [fetchCategories, fetchTransactions]
   )
 
   const reassignCategoryToOther = useCallback(
     async (id) => {
       const result = await apiReassignCategoryToOther(id)
-      await fetchCategories()
+      await Promise.all([fetchCategories(), fetchTransactions()])
       return result
     },
-    [fetchCategories]
+    [fetchCategories, fetchTransactions]
+  )
+
+  //transactions
+  const addTransaction = useCallback(
+    async (tx) => {
+      const result = await apiCreateTransaction(tx)
+      await fetchTransactions()
+      return result
+    },
+    [fetchTransactions]
+  )
+
+  const updateTransaction = useCallback(
+    async (id, patch) => {
+      const result = await apiUpdateTransaction(id, patch)
+      await fetchTransactions()
+      return result
+    },
+    [fetchTransactions]
+  )
+
+  const deleteTransaction = useCallback(
+    async (id) => {
+      const result = await apiDeleteTransaction(id)
+      await fetchTransactions()
+      return result
+    },
+    [fetchTransactions]
+  )
+
+  const getRecentTransactions = useCallback(
+    (limit = 5) => {
+      return [...transactions]
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, limit)
+    },
+    [transactions]
   )
 
   const value = {
     categories,
+    transactions,
     fetchCategories,
+    fetchTransactions,
     addCategory,
     updateCategory,
     deleteCategory,
     reassignCategory,
     reassignCategoryToOther,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+    getRecentTransactions,
     toasts,
     notify,
     dismissToast,
