@@ -18,6 +18,7 @@ import {
   setBudget as apiSetBudget,
   deleteBudget as apiDeleteBudget,
 } from '../api/budgets.js'
+import { inWindow } from '../utils/dateRanges.js'
 
 const DataContext = createContext(null)
 
@@ -187,6 +188,29 @@ export function DataProvider({ children }) {
     [transactions]
   )
 
+  const getPaymentMethodSplit = useCallback(
+    (window) => {
+      const filtered = transactions.filter((t) => inWindow(t.date, window))
+      const total = filtered.length
+      if (total === 0) return []
+
+      const counts = { Cash: 0, Card: 0, EFT: 0 }
+      filtered.forEach((t) => {
+        const method = t.paymentMethod || t.payment_method
+        if (method && counts[method] !== undefined) {
+          counts[method] += 1
+        }
+      })
+
+      return Object.entries(counts).map(([name, count]) => ({
+        name,
+        count,
+        pct: total > 0 ? Math.round((count / total) * 100) : 0,
+      }))
+    },
+    [transactions]
+  )
+
   // budgets
   const getOverallBudget = useCallback(
     (year = new Date().getFullYear()) => {
@@ -285,6 +309,7 @@ export function DataProvider({ children }) {
     updateTransaction,
     deleteTransaction,
     getRecentTransactions,
+    getPaymentMethodSplit,
     getOverallBudget,
     getCategoryBudget,
     getCategoryBudgetAllYears,
