@@ -63,3 +63,14 @@ export async function getPaymentSplit(startDate, endDate) {
   const data = await apiFetch(`/api/transactions/payment-split${queryString}`)
   return toCamelCase(data)
 }
+
+export async function getPaymentSplit({ startDate, endDate } = {}) {
+  const params = new URLSearchParams()
+
+  if (startDate) params.append('startDate', startDate)
+  if (endDate) params.append('endDate', endDate)
+
+  const queryString = params.toString() ? `?${params.toString()}` : ''
+  const data = await apiFetch(`/api/transactions/payment-split${queryString}`)
+  return toCamelCase(data)
+}
