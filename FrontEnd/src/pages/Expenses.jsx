@@ -1,3 +1,27 @@
+import { useState } from 'react'
+import Layout from '../components/Layout.jsx'
+import CategoryManagerModal from '../components/CategoryManagerModal.jsx'
+
 export default function Expenses() {
-  return <div style={{ padding: 24 }}>Expenses (protected — place holder for when i write actual code)</div>
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
+
+  return (
+    <Layout
+      title="Expenses"
+      actions={
+        <button className="btn btn-secondary" onClick={() => setShowCategoryModal(true)}>
+          Manage Categories
+        </button>
+      }
+    >
+      <p>Expenses page content coming soon.</p>
+
+      {showCategoryModal && (
+        <CategoryManagerModal
+          type="expense"
+          onClose={() => setShowCategoryModal(false)}
+        />
+      )}
+    </Layout>
+  )
 }
