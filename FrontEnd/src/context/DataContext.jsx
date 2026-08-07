@@ -13,6 +13,11 @@ import {
   updateTransaction as apiUpdateTransaction,
   deleteTransaction as apiDeleteTransaction,
 } from '../api/transactions.js'
+import {
+  getBudgetsByYear as apiGetBudgetsByYear,
+  setBudget as apiSetBudget,
+  deleteBudget as apiDeleteBudget,
+} from '../api/budgets.js'
 
 const DataContext = createContext(null)
 
@@ -23,6 +28,7 @@ function makeId() {
 export function DataProvider({ children }) {
   const [categories, setCategories] = useState([])
   const [transactions, setTransactions] = useState([])
+  const [budgetsByYear, setBudgetsByYear] = useState({})
 
   // toast notifications 
   const [toasts, setToasts] = useState([])
@@ -64,12 +70,23 @@ export function DataProvider({ children }) {
     }
   }, [])
 
+  const fetchBudgetsByYear = useCallback(async (year = new Date().getFullYear()) => {
+    try {
+      const data = await apiGetBudgetsByYear(year)
+      setBudgetsByYear((prev) => ({ ...prev, [year]: data }))
+      return data
+    } catch (err) {
+      console.error(`Failed to fetch budgets for year ${year}:`, err)
+    }
+  }, [])
+
   useEffect(() => {
     fetchCategories()
     fetchTransactions()
-  }, [fetchCategories, fetchTransactions])
+    fetchBudgetsByYear(new Date().getFullYear())
+  }, [fetchCategories, fetchTransactions, fetchBudgetsByYear])
 
-  //categories
+  // categories
   const addCategory = useCallback(
     async (cat) => {
       const result = await apiCreateCategory(cat)
@@ -120,7 +137,7 @@ export function DataProvider({ children }) {
     [fetchCategories, fetchTransactions]
   )
 
-  //transactions
+  // transactions
   const addTransaction = useCallback(
     async (tx) => {
       const result = await apiCreateTransaction(tx)
@@ -157,11 +174,57 @@ export function DataProvider({ children }) {
     [transactions]
   )
 
+  // budgets
+  const getOverallBudget = useCallback(
+    (year = new Date().getFullYear()) => {
+      return budgetsByYear[year]?.overallBudget || 0
+    },
+    [budgetsByYear]
+  )
+
+  const getCategoryBudget = useCallback(
+    (categoryId, year = new Date().getFullYear()) => {
+      const yearBudgets = budgetsByYear[year]?.categoryBudgets || []
+      const found = yearBudgets.find((b) => Number(b.categoryId) === Number(categoryId))
+      return found ? Number(found.amount) : 0
+    },
+    [budgetsByYear]
+  )
+
+  const setOverallBudget = useCallback(
+    async (year, amount) => {
+      const updated = await apiSetBudget({ categoryId: null, year, amount })
+      setBudgetsByYear((prev) => ({ ...prev, [year]: updated }))
+      return updated
+    },
+    []
+  )
+
+  const setCategoryBudget = useCallback(
+    async (categoryId, year, amount) => {
+      const updated = await apiSetBudget({ categoryId, year, amount })
+      setBudgetsByYear((prev) => ({ ...prev, [year]: updated }))
+      return updated
+    },
+    []
+  )
+
+  const removeBudget = useCallback(
+    async (year, categoryId = null) => {
+      const updated = await apiDeleteBudget(year, categoryId)
+      setBudgetsByYear((prev) => ({ ...prev, [year]: updated }))
+      return updated
+    },
+    []
+  )
+
   const value = {
     categories,
     transactions,
+    budgetsByYear,
     fetchCategories,
     fetchTransactions,
+    fetchBudgetsByYear,
     addCategory,
     updateCategory,
     deleteCategory,
@@ -171,6 +234,11 @@ export function DataProvider({ children }) {
     updateTransaction,
     deleteTransaction,
     getRecentTransactions,
+    getOverallBudget,
+    getCategoryBudget,
+    setOverallBudget,
+    setCategoryBudget,
+    removeBudget,
     toasts,
     notify,
     dismissToast,
