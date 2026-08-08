@@ -9,7 +9,9 @@ module.exports = {
       user: process.env.DB_USER,                //  from .env
       password: process.env.DB_PASSWORD,        //  '' 
       database: process.env.DB_NAME,            //  ''
+      dateStrings: true,                                //setting date to show in normal YYYY/MM/DD
     },
+  
     migrations: { directory: "./migrations" },   //this is for knex to know where to find the migration files, which are used to create and modify the database schema. The migrations folder is located in the same directory as this knexfile.js file.
     seeds: { directory: "./seeds" },        //this is for knex to know where to find the seed files, which are used to populate the database with initial data. The seeds folder is located in the same directory as this knexfile.js file.
   },
@@ -24,6 +26,7 @@ module.exports = {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME_TEST || "financial_dashboard_test",
+      dateStrings: true,
     },
     migrations: { directory: "./migrations" },
     seeds: { directory: "./seeds" },
@@ -42,6 +45,7 @@ production: {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    dateStrings: true,
   },
   migrations: { directory: "./migrations" },
   seeds: { directory: "./seeds" },

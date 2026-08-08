@@ -24,7 +24,7 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="brand"><Wallet size={20} /> Ledger<span>ly</span></div>
+      <div className="brand"><Wallet size={20} /></div>
       <nav>
         {links.map((link) => {
           const Icon = link.icon

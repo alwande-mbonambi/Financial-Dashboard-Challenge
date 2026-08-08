@@ -14,10 +14,19 @@ export function getCurrentWindow(range, customStart, customEnd, now = new Date()
     case 'this_year':
       return { start: startOfYear(now), end: endOfYear(now) }
     case 'custom':
-      return {
-        start: customStart ? new Date(customStart) : startOfMonth(now),
-        end: customEnd ? new Date(`${customEnd}T23:59:59`) : endOfMonth(now),
+      // If either date is missing, return an impossible window (end
+      // before start) rather than silently falling back to "this
+      // month" — every chart/card that filters with inWindow() will
+      // then naturally show nothing, with no changes needed anywhere
+      // else. Recent transactions and payment split still show,
+      // since neither depends on this window.
+      if (!customStart || !customEnd) {
+        return { start: new Date('2100-01-01'), end: new Date('2000-01-01') }
       }
+      return {
+        start: new Date(customStart),
+        end: new Date(`${customEnd}T23:59:59`),
+      } 
     case 'all':
     default:
       return { start: new Date(2000, 0, 1), end: new Date(2100, 0, 1) }
