@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 import { login as apiLogin } from '../api/auth.js';
 import { setAuthToken } from '../api/client.js';
 
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
